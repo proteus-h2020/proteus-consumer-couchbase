@@ -44,7 +44,6 @@ public class Runner implements Runnable {
 
 	public void setup(Properties properties) {
 
-		ProteusTask task;
 		try {
 			task = ProteusTaskType.from((String) properties.get("eu.proteus.kafkaTopic"));
 			task.setup(properties);
@@ -97,10 +96,6 @@ public class Runner implements Runnable {
 			System.out.println("Cerrariamos la ejecución del hilo < "
 					+ this.runnerProperties.getProperty("eu.proteus.kafkaTopic") + " >");
 		}
-
-	}
-
-	public void cleanUp() {
 
 	}
 

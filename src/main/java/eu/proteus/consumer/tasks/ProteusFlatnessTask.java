@@ -37,8 +37,4 @@ public class ProteusFlatnessTask implements ProteusTask {
 				+ ConsumerUtils.getTopicName(runnerProperties.getProperty("eu.proteus.kafkaTopic")));
 	}
 
-	@Override
-	public void cleanUp() {
-	}
-
 }

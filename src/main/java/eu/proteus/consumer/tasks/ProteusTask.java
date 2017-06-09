@@ -13,6 +13,4 @@ public interface ProteusTask {
 
 	void setup(Properties properties);
 
-	void cleanUp();
-
 }

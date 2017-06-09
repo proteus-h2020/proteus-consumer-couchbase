@@ -1,7 +1,5 @@
 package eu.proteus.consumer;
 
-import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,16 +27,12 @@ public class ProteusCouchbase {
 	private static final Logger logger = LoggerFactory.getLogger(Runner.class);
 	private List<Runner> runners = new LinkedList<Runner>();
 	private static ExecutorService service = Executors.newFixedThreadPool(3);
-	private InputStream inputStream;
 
 	// Couchbase Connection
 	private static Cluster clusterCouchbase;
 	private static Bucket proteusBucket;
 	private static CouchbaseEnvironment couchbaseEnvironment;
 	private static List<String> nodes;
-
-	// Kafka Connection
-	private ArrayList<String> topicsList;
 
 	private void run(String[] args) throws InterruptedException, InvalidTaskTypeException {
 
@@ -59,7 +53,6 @@ public class ProteusCouchbase {
 			for (Runner runner : runners) {
 				Thread t = new Thread(runner);
 				t.start();
-				// service.execute(runner);
 			}
 		}
 
