@@ -63,17 +63,6 @@ public class ProteusSerializer implements Closeable, AutoCloseable, Serializer<M
 
 	@Override
 	public Measurement deserialize(String topic, byte[] bytes) {
-		// System.out.println("topic" + topic);
-		// System.out.println("bytes" + bytes);
-		// System.out.println("bytes" + bytes.length);
-		// System.out.println("bytse: " + Arrays.toString(bytes));
-		// System.out.println("kryos: " + kryos.get());
-
-		// if ((topic.equals("proteus-realtime") ||
-		// (topic.equals("proteus-flatness")) && bytes.length > 40)) {
-		// System.out.println("Escape");
-		// return null;
-		// }
 
 		if (topic.equals(ProteusData.get("kafka.topicName")) && bytes.length < 40) {
 			return kryos.get().readObject(new ByteBufferInput(bytes), SensorMeasurement.class);
