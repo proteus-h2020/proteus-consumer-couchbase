@@ -32,6 +32,8 @@ public class ConsumerUtils {
 			ret = "proteus-realtime";
 		if (name.equals(KafkaTopics.PROTEUS_FLATNESS.toString()))
 			ret = "proteus-flatness";
+		if (name.equals(KafkaTopics.SIMPLE_MOMENTS.toString()))
+			ret = "simple-moments";
 		return ret;
 	}
 
