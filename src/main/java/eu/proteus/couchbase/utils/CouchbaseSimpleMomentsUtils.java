@@ -60,7 +60,7 @@ public class CouchbaseSimpleMomentsUtils {
 	public static void updateSimpleMomentsDocument(Bucket proteusBucket, ArrayList<String> topicsList, Object record) {
 
 		StringBuilder documentName = new StringBuilder().append(DOCUMENT_HEADER).append(DOCUMENT_SEPARATOR)
-				.append(coilID);
+				.append(((MomentsResult) record).getCoilId());
 
 		JsonObject simpleMoments = JsonObject.create();
 

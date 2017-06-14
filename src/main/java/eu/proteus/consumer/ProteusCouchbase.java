@@ -17,9 +17,8 @@ import com.couchbase.client.java.env.CouchbaseEnvironment;
 import com.couchbase.client.java.env.DefaultCouchbaseEnvironment;
 
 import eu.proteus.consumer.exceptions.InvalidTaskTypeException;
+import eu.proteus.consumer.utils.ConsumerUtils;
 import eu.proteus.consumer.utils.KafkaTopics;
-import eu.proteus.consumer.utils.ProteusBuckets;
-import eu.proteus.producer.utils.ConsumerUtils;
 
 public class ProteusCouchbase {
 
@@ -42,7 +41,7 @@ public class ProteusCouchbase {
 		clusterCouchbase = CouchbaseCluster.create(couchbaseEnvironment, nodes);
 
 		for (KafkaTopics topic : KafkaTopics.values()) {
-			proteusBucket = selectCouchbaseBucket(clusterCouchbase, topic.name());
+			proteusBucket = ConsumerUtils.selectCouchbaseBucket(clusterCouchbase, topic.name());
 			Properties runnerProperties = new Properties();
 			runnerProperties = ConsumerUtils.loadPropertiesFromFile(PROPERTIES_FILE);
 			runnerProperties.put("eu.proteus.kafkaTopic", topic.name());
@@ -62,15 +61,6 @@ public class ProteusCouchbase {
 
 	public static void main(String[] args) throws Exception {
 		new ProteusCouchbase().run(args);
-	}
-
-	private Bucket selectCouchbaseBucket(Cluster cluster, String topic) {
-		String myBucket = "proteus";
-		for (ProteusBuckets bucket : ProteusBuckets.values()) {
-			if (!topic.contains("PROTEUS"))
-				myBucket = bucket.name();
-		}
-		return cluster.openBucket(myBucket.toLowerCase());
 	}
 
 }

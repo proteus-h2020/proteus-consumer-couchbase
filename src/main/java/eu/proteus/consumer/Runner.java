@@ -13,17 +13,20 @@ import org.slf4j.LoggerFactory;
 import com.couchbase.client.java.Bucket;
 
 import eu.proteus.consumer.exceptions.InvalidTaskTypeException;
-import eu.proteus.consumer.serialization.ProteusNewSerializer;
+import eu.proteus.consumer.serialization.ProteusSerializer;
 import eu.proteus.consumer.tasks.ProteusTask;
+import eu.proteus.consumer.utils.ConsumerUtils;
 import eu.proteus.consumer.utils.ProteusTaskType;
-import eu.proteus.producer.utils.ConsumerUtils;
 
 public class Runner implements Runnable {
 
+	// Logger
+	private static final Logger logger = LoggerFactory.getLogger(Runner.class);
+
+	// General
 	private Properties runnerProperties = new Properties();
 	private Bucket proteusBucket;
 	private ProteusTask task;
-	private static final Logger logger = LoggerFactory.getLogger(Runner.class);
 
 	// Kafka
 	private KafkaConsumer<Integer, Object> kafkaConsumer;
@@ -68,7 +71,7 @@ public class Runner implements Runnable {
 		topicsList.add(ConsumerUtils.getTopicName(runnerProperties.getProperty("eu.proteus.kafkaTopic")));
 		properties.put("bootstrap.servers", properties.get("com.treelogic.proteus.kafka.bootstrapServers"));
 		properties.put("key.deserializer", "org.apache.kafka.common.serialization.IntegerSerializer");
-		properties.put("value.deserializer", ProteusNewSerializer.class.getName());
+		properties.put("value.deserializer", ProteusSerializer.class.getName());
 		properties.put("group.id",
 				"proteus-" + ConsumerUtils.getTopicName(runnerProperties.getProperty("eu.proteus.kafkaTopic")));
 		properties.put("max.poll.records", 100);
@@ -77,7 +80,7 @@ public class Runner implements Runnable {
 		properties.put("fetch.max.wati.ms", 60000);
 		properties.put("auto.offset.reset", "latest");
 
-		kafkaConsumer = new KafkaConsumer<>(properties, new IntegerDeserializer(), new ProteusNewSerializer());
+		kafkaConsumer = new KafkaConsumer<>(properties, new IntegerDeserializer(), new ProteusSerializer());
 		kafkaConsumer.subscribe(topicsList);
 
 		try {
@@ -89,13 +92,10 @@ public class Runner implements Runnable {
 					} else
 						task.doWork(record.key(), record.value(), proteusBucket, topicsList);
 				}
-
 			}
 		} finally {
-			System.out.println("Cerrariamos la ejecución del hilo < "
-					+ this.runnerProperties.getProperty("eu.proteus.kafkaTopic") + " >");
+			logger.error(
+					"Kill thread for topic:  < " + this.runnerProperties.getProperty("eu.proteus.kafkaTopic") + " >");
 		}
-
 	}
-
 }

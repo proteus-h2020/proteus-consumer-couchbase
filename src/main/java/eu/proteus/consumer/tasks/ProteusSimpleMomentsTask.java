@@ -9,8 +9,8 @@ import org.slf4j.LoggerFactory;
 import com.couchbase.client.java.Bucket;
 
 import eu.proteus.consumer.model.MomentsResult;
+import eu.proteus.consumer.utils.ConsumerUtils;
 import eu.proteus.couchbase.utils.CouchbaseSimpleMomentsUtils;
-import eu.proteus.producer.utils.ConsumerUtils;
 
 public class ProteusSimpleMomentsTask implements ProteusTask {
 

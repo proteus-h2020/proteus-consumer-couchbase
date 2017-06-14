@@ -9,8 +9,8 @@ import org.slf4j.LoggerFactory;
 import com.couchbase.client.java.Bucket;
 
 import eu.proteus.consumer.model.Measurement;
+import eu.proteus.consumer.utils.ConsumerUtils;
 import eu.proteus.couchbase.utils.CouchbaseSimulationTopicsUtils;
-import eu.proteus.producer.utils.ConsumerUtils;
 
 public class ProteusFlatnessTask implements ProteusTask {
 
