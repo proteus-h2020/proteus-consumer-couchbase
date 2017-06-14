@@ -5,11 +5,9 @@ import java.util.Properties;
 
 import com.couchbase.client.java.Bucket;
 
-import eu.proteus.consumer.model.Measurement;
-
 public interface ProteusTask {
 
-	void doWork(int coil, Measurement record, Bucket proteusBucket, ArrayList<String> topicsList);
+	void doWork(int coil, Object object, Bucket proteusBucket, ArrayList<String> topicsList);
 
 	void setup(Properties properties);
 

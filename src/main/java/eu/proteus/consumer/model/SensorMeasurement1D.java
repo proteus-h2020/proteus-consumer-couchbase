@@ -13,4 +13,8 @@ public class SensorMeasurement1D extends SensorMeasurement {
 		this.value = value;
 	}
 
+	public double getX() {
+		return this.x;
+	}
+
 }

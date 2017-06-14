@@ -10,7 +10,7 @@ import eu.proteus.consumer.tasks.ProteusTask;
 public enum ProteusTaskType {
 
 	PROTEUS_FLATNESS(new ProteusFlatnessTask()), PROTEUS_HSM(new ProteusHSMTask()), PROTEUS_REALTIME(
-			new ProteusStreamingTask()), PROTEUS_SIMPLE_MOMENTS(new ProteusSimpleMomentsTask());
+			new ProteusStreamingTask()), SIMPLE_MOMENTS(new ProteusSimpleMomentsTask());
 
 	private ProteusTask task;
 

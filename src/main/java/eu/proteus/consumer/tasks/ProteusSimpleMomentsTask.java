@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory;
 
 import com.couchbase.client.java.Bucket;
 
-import eu.proteus.consumer.model.Measurement;
-import eu.proteus.couchbase.utils.CouchbaseUtils;
+import eu.proteus.consumer.model.MomentsResult;
+import eu.proteus.couchbase.utils.CouchbaseSimpleMomentsUtils;
 import eu.proteus.producer.utils.ConsumerUtils;
 
 public class ProteusSimpleMomentsTask implements ProteusTask {
@@ -20,15 +20,14 @@ public class ProteusSimpleMomentsTask implements ProteusTask {
 	}
 
 	@Override
-	public void doWork(int coil, Measurement record, Bucket proteusBucket, ArrayList<String> topicList) {
+	public void doWork(int coil, Object record, Bucket proteusBucket, ArrayList<String> topicList) {
 
-		logger.info("< " + this.getClass().getName() + " > - Simple Moments " + record.getCoilID() + " inserted");
-
-		if (CouchbaseUtils.checkIfDocumentExists(String.valueOf(coil), proteusBucket)) {
-			CouchbaseUtils.updateDocument(proteusBucket, topicList, record);
+		if (CouchbaseSimpleMomentsUtils.checkIfDocumentExists(String.valueOf(((MomentsResult) record).getCoilId()),
+				proteusBucket)) {
+			CouchbaseSimpleMomentsUtils.updateSimpleMomentsDocument(proteusBucket, topicList, record);
 		} else {
-			CouchbaseUtils.createDocumentFirstTime(String.valueOf(record.getCoilID()), record, topicList,
-					proteusBucket);
+			CouchbaseSimpleMomentsUtils.createSimpleMomentsFirstTime(
+					String.valueOf(((MomentsResult) record).getCoilId()), record, topicList, proteusBucket);
 		}
 
 	}

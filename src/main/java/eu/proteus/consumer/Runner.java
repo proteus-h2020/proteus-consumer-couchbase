@@ -13,8 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.couchbase.client.java.Bucket;
 
 import eu.proteus.consumer.exceptions.InvalidTaskTypeException;
-import eu.proteus.consumer.model.Measurement;
-import eu.proteus.consumer.serialization.ProteusSerializer;
+import eu.proteus.consumer.serialization.ProteusNewSerializer;
 import eu.proteus.consumer.tasks.ProteusTask;
 import eu.proteus.consumer.utils.ProteusTaskType;
 import eu.proteus.producer.utils.ConsumerUtils;
@@ -27,7 +26,7 @@ public class Runner implements Runnable {
 	private static final Logger logger = LoggerFactory.getLogger(Runner.class);
 
 	// Kafka
-	private KafkaConsumer<Integer, Measurement> kafkaConsumer;
+	private KafkaConsumer<Integer, Object> kafkaConsumer;
 	private ArrayList<String> topicsList;
 
 	public Runner(Properties properties, Bucket proteusBucket) {
@@ -69,7 +68,7 @@ public class Runner implements Runnable {
 		topicsList.add(ConsumerUtils.getTopicName(runnerProperties.getProperty("eu.proteus.kafkaTopic")));
 		properties.put("bootstrap.servers", properties.get("com.treelogic.proteus.kafka.bootstrapServers"));
 		properties.put("key.deserializer", "org.apache.kafka.common.serialization.IntegerSerializer");
-		properties.put("value.deserializer", ProteusSerializer.class.getName());
+		properties.put("value.deserializer", ProteusNewSerializer.class.getName());
 		properties.put("group.id",
 				"proteus-" + ConsumerUtils.getTopicName(runnerProperties.getProperty("eu.proteus.kafkaTopic")));
 		properties.put("max.poll.records", 100);
@@ -78,17 +77,17 @@ public class Runner implements Runnable {
 		properties.put("fetch.max.wati.ms", 60000);
 		properties.put("auto.offset.reset", "latest");
 
-		kafkaConsumer = new KafkaConsumer<>(properties, new IntegerDeserializer(), new ProteusSerializer());
+		kafkaConsumer = new KafkaConsumer<>(properties, new IntegerDeserializer(), new ProteusNewSerializer());
 		kafkaConsumer.subscribe(topicsList);
 
 		try {
 			while (true) {
-				ConsumerRecords<Integer, Measurement> records = kafkaConsumer.poll(Long.MAX_VALUE);
-				for (ConsumerRecord<Integer, Measurement> record : records) {
-					logger.info("Task " + this.getClass().getSimpleName() + " doing work for coil "
-							+ record.value().getCoilID() + " on topic "
-							+ ConsumerUtils.getTopicName(runnerProperties.getProperty("eu.proteus.kafkaTopic")));
-					task.doWork(record.key(), record.value(), proteusBucket, topicsList);
+				ConsumerRecords<Integer, Object> records = kafkaConsumer.poll(Long.MAX_VALUE);
+				for (ConsumerRecord<Integer, Object> record : records) {
+					if (topicsList.contains("simple-moments")) {
+						task.doWork(0, record.value(), proteusBucket, topicsList);
+					} else
+						task.doWork(record.key(), record.value(), proteusBucket, topicsList);
 				}
 
 			}
