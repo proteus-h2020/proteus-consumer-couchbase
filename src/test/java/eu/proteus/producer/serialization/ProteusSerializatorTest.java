@@ -9,7 +9,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.junit.Before;
 import org.junit.Test;
 
-import eu.proteus.consumer.model.HSMMeasurement;
 import eu.proteus.consumer.model.SensorMeasurement1D;
 import eu.proteus.consumer.model.SensorMeasurement2D;
 import eu.proteus.consumer.serialization.ProteusSerializer;
@@ -50,21 +49,6 @@ public class ProteusSerializatorTest {
 
 		SensorMeasurement2D deserialized = (SensorMeasurement2D) this.kryo.deserialize("proteus-realtime", bytes);
 		assertEquals(row, deserialized);
-	}
-
-	@Test
-	public void testHSMSerializationAndDeserialization() {
-		int coilId = ThreadLocalRandom.current().nextInt(3000, 8000);
-		HSMMeasurement record = new HSMMeasurement(coilId);
-
-		Map<String, Object> map = createFakeHSMValues();
-		record.setVariables(map);
-
-		byte[] bytes = this.kryo.serialize("proteus-hsm", record);
-
-		HSMMeasurement deserialized = (HSMMeasurement) this.kryo.deserialize("proteus-hsm", bytes);
-
-		assertEquals(record, deserialized);
 	}
 
 	private Map<String, Object> createFakeHSMValues() {
