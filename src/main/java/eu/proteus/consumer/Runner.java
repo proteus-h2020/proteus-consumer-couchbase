@@ -2,6 +2,7 @@ package eu.proteus.consumer;
 
 import java.util.ArrayList;
 import java.util.Properties;
+import java.util.UUID;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -72,8 +73,7 @@ public class Runner implements Runnable {
 		properties.put("bootstrap.servers", properties.get("com.treelogic.proteus.kafka.bootstrapServers"));
 		properties.put("key.deserializer", "org.apache.kafka.common.serialization.IntegerSerializer");
 		properties.put("value.deserializer", ProteusSerializer.class.getName());
-		properties.put("group.id",
-				"proteus-" + ConsumerUtils.getTopicName(runnerProperties.getProperty("eu.proteus.kafkaTopic")));
+		properties.put("group.id", UUID.randomUUID().toString());
 		properties.put("max.poll.records", 100);
 		properties.put("session.timeout.ms", 60000);
 		properties.put("request.timeout.ms", 80000);

@@ -22,6 +22,10 @@ public class ProteusSimpleMomentsTask implements ProteusTask {
 	@Override
 	public void doWork(int coil, Object record, Bucket proteusBucket, ArrayList<String> topicList) {
 
+		logger.debug("Simple Moments: " + String.valueOf(((MomentsResult) record).getX()) + "//"
+				+ String.valueOf(((MomentsResult) record).getY()) + "//"
+				+ String.valueOf(((MomentsResult) record).getVarId()));
+
 		if (CouchbaseSimpleMomentsUtils.checkIfDocumentExists(String.valueOf(((MomentsResult) record).getCoilId()),
 				proteusBucket)) {
 			CouchbaseSimpleMomentsUtils.updateSimpleMomentsDocument(proteusBucket, topicList, record);
