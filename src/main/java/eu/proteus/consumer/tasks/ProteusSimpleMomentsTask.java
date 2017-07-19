@@ -14,31 +14,37 @@ import eu.proteus.couchbase.utils.CouchbaseSimpleMomentsUtils;
 
 public class ProteusSimpleMomentsTask implements ProteusTask {
 
-	private static final Logger logger = LoggerFactory.getLogger(ProteusSimpleMomentsTask.class);
+    private static final Logger logger = LoggerFactory
+            .getLogger(ProteusSimpleMomentsTask.class);
 
-	public ProteusSimpleMomentsTask() {
-	}
+    public ProteusSimpleMomentsTask() {
+    }
 
-	@Override
-	public void doWork(int coil, Object record, Bucket proteusBucket, ArrayList<String> topicList) {
+    @Override
+    public void doWork(int coil, Object record, Bucket proteusBucket,
+            ArrayList<String> topicList) {
 
-		logger.debug("Simple Moments: " + String.valueOf(((MomentsResult) record).getX()) + "//"
-				+ String.valueOf(((MomentsResult) record).getY()) + "//"
-				+ String.valueOf(((MomentsResult) record).getVarId()));
+        logger.debug("Simple Moments: "
+                + String.valueOf(((MomentsResult) record).getX()) + "//"
+                + String.valueOf(((MomentsResult) record).getY()) + "//"
+                + String.valueOf(((MomentsResult) record).getVarId()));
 
-		if (CouchbaseSimpleMomentsUtils.checkIfDocumentExists(String.valueOf(((MomentsResult) record).getCoilId()),
-				proteusBucket)) {
-			CouchbaseSimpleMomentsUtils.updateSimpleMomentsDocument(proteusBucket, topicList, record);
-		} else {
-			CouchbaseSimpleMomentsUtils.createSimpleMomentsFirstTime(
-					String.valueOf(((MomentsResult) record).getCoilId()), record, topicList, proteusBucket);
-		}
+        if (CouchbaseSimpleMomentsUtils.checkIfDocumentExists(
+                ((MomentsResult) record).getCoilId(), proteusBucket)) {
+            CouchbaseSimpleMomentsUtils.updateSimpleMomentsDocument(
+                    proteusBucket, topicList, record);
+        } else {
+            CouchbaseSimpleMomentsUtils.createSimpleMomentsFirstTime(
+                    ((MomentsResult) record).getCoilId(), record, topicList,
+                    proteusBucket);
+        }
 
-	}
+    }
 
-	@Override
-	public void setup(Properties runnerProperties) {
-		logger.info("Task: < " + this.getClass().getName() + "  > launched over topic "
-				+ ConsumerUtils.getTopicName(runnerProperties.getProperty("eu.proteus.kafkaTopic")));
-	}
+    @Override
+    public void setup(Properties runnerProperties) {
+        logger.info("Task: < " + this.getClass().getName()
+                + "  > launched over topic " + ConsumerUtils.getTopicName(
+                        runnerProperties.getProperty("eu.proteus.kafkaTopic")));
+    }
 }
