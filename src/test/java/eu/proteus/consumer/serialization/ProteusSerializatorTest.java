@@ -1,4 +1,4 @@
-package eu.proteus.producer.serialization;
+package eu.proteus.consumer.serialization;
 
 import static org.junit.Assert.assertEquals;
 

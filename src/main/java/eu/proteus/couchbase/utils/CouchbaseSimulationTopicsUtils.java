@@ -11,7 +11,6 @@ import com.couchbase.client.java.subdoc.DocumentFragment;
 
 import eu.proteus.consumer.model.HSMMeasurement;
 import eu.proteus.consumer.model.Measurement;
-import eu.proteus.consumer.model.MomentsResult;
 
 public class CouchbaseSimulationTopicsUtils {
 
@@ -22,54 +21,6 @@ public class CouchbaseSimulationTopicsUtils {
             return false;
         else
             return true;
-    }
-
-    public static void createSimpleMomentsFirstTime(int coilID, Object record,
-            ArrayList<String> topicLIst, Bucket proteusBucket) {
-
-        List<JsonObject> proteusSimpleMoments = new ArrayList<>();
-        JsonObject simpleMoments = JsonObject.create();
-        simpleMoments = JsonObject.empty()
-                .put("coil", ((MomentsResult) record).getCoilId())
-                .put("var-id", ((MomentsResult) record).getVarId())
-                .put("mean", ((MomentsResult) record).getMean())
-                .put("variance", ((MomentsResult) record).getVariance())
-                .put("counter", ((MomentsResult) record).getCounter())
-                .put("stdDeviation",
-                        ((MomentsResult) record).getStdDeviation());
-        proteusSimpleMoments.add(simpleMoments);
-        JsonObject structureProteusDocument = JsonObject.empty()
-                .put("simple-moments-coilID", coilID)
-                .put("simple-moments", simpleMoments);
-
-        StringBuilder head = new StringBuilder().append("Simple-Moments")
-                .append("-").append(coilID);
-
-        JsonDocument doc = JsonDocument.create(head.toString(),
-                structureProteusDocument);
-        proteusBucket.upsert(doc);
-
-    }
-
-    public static void updateSimpleMomentsDocument(Bucket proteusBucket,
-            ArrayList<String> topicsList, Object record) {
-
-        System.out.println("Update SimpleMoments");
-
-        StringBuilder head = new StringBuilder().append("Simple-Moments")
-                .append("-").append(((MomentsResult) record).getCoilId());
-
-        JsonObject simpleMoments = JsonObject.create();
-        simpleMoments = JsonObject.empty()
-                .put("coil", ((MomentsResult) record).getCoilId())
-                .put("var-id", ((MomentsResult) record).getVarId())
-                .put("mean", ((MomentsResult) record).getMean())
-                .put("variance", ((MomentsResult) record).getVariance())
-                .put("counter", ((MomentsResult) record).getCounter())
-                .put("stdDeviation",
-                        ((MomentsResult) record).getStdDeviation());
-        proteusBucket.mutateIn(head.toString())
-                .arrayAppend(topicsList.get(0), simpleMoments).execute();
     }
 
     public static void createDocumentFirstTime(int coilID, Object record,
@@ -129,7 +80,7 @@ public class CouchbaseSimulationTopicsUtils {
         JsonObject structureProteusDocument = JsonObject.empty()
                 .put("coilID", coilID).put("proteus-realtime", proteusRealtime)
                 .put("proteus-flatness", proteusFlatness)
-                .put("proteus-hsm", proteusHSM);
+                .put("proteus-hsm", ((Measurement) record).getHSMVariables());
         JsonDocument doc = JsonDocument.create(String.valueOf(coilID),
                 structureProteusDocument);
         proteusBucket.upsert(doc);
@@ -181,7 +132,9 @@ public class CouchbaseSimulationTopicsUtils {
 
         if (!hsm.isEmpty()) {
             proteusBucket.mutateIn(((Measurement) record).getStringCoilID())
-                    .arrayAppend(topicsList.get(0), hsm).execute();
+                    .upsert("proteus-hsm",
+                            ((Measurement) record).getHSMVariables())
+                    .execute();
         }
 
     }
