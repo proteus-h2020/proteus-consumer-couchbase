@@ -3,6 +3,9 @@ package eu.proteus.couchbase.utils;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.couchbase.client.core.message.kv.subdoc.multi.Lookup;
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.document.JsonDocument;
@@ -13,6 +16,8 @@ import eu.proteus.consumer.model.HSMMeasurement;
 import eu.proteus.consumer.model.Measurement;
 
 public class CouchbaseSimulationTopicsUtils {
+
+    private static final Logger logger = LoggerFactory.getLogger("updates");
 
     public static boolean checkIfDocumentExists(int coil,
             Bucket proteusBucket) {
@@ -26,12 +31,10 @@ public class CouchbaseSimulationTopicsUtils {
     public static void createDocumentFirstTime(int coilID, Object record,
             ArrayList<String> topicList, Bucket proteusBucket) {
         List<JsonObject> proteusRealtime = new ArrayList<>();
-        List<JsonObject> proteusHSM = new ArrayList<>();
         List<JsonObject> proteusFlatness = new ArrayList<>();
 
         JsonObject row1d = JsonObject.create();
         JsonObject row2d = JsonObject.create();
-        JsonObject hsm = JsonObject.create();
 
         if (((Measurement) record).getType() == 0x00) {
             row1d = JsonObject.empty()
@@ -49,12 +52,6 @@ public class CouchbaseSimulationTopicsUtils {
                     .put("varId", ((Measurement) record).getVarName());
         }
 
-        if (record.getClass().equals(HSMMeasurement.class)) {
-            hsm = JsonObject.empty().put("variables",
-                    ((Measurement) record).getHSMVariables());
-
-        }
-
         try {
 
             if (getKafkaTopic(topicList).equals("proteus-realtime")) {
@@ -63,15 +60,11 @@ public class CouchbaseSimulationTopicsUtils {
                 if (!row2d.isEmpty())
                     proteusRealtime.add(row2d);
             }
-            if (getKafkaTopic(topicList).equals("proteus-hsm")) {
-                if (!hsm.isEmpty())
-                    proteusHSM.add(hsm);
-            }
             if (getKafkaTopic(topicList).equals("proteus-flatness")) {
                 if (!row1d.isEmpty())
-                    proteusRealtime.add(row1d);
+                    proteusFlatness.add(row1d);
                 if (!row2d.isEmpty())
-                    proteusRealtime.add(row2d);
+                    proteusFlatness.add(row2d);
             }
         } catch (NullPointerException e) {
             System.out.println(e);
@@ -85,6 +78,11 @@ public class CouchbaseSimulationTopicsUtils {
                 structureProteusDocument);
         proteusBucket.upsert(doc);
 
+        logger.debug("New Document - Coil ID: " + coilID
+                + " - Proteus-Realtime: " + proteusRealtime
+                + ", Proteus-Flatness: " + proteusFlatness + ", Proteus HSM: + "
+                + ((Measurement) record).getHSMVariables());
+
     }
 
     public static String getKafkaTopic(ArrayList<String> topicList) {
@@ -94,47 +92,132 @@ public class CouchbaseSimulationTopicsUtils {
     public static void updateDocument(Bucket proteusBucket,
             ArrayList<String> topicsList, Object record) {
 
-        JsonObject row1d = JsonObject.create();
-        JsonObject row2d = JsonObject.create();
-        JsonObject hsm = JsonObject.create();
-
-        if (((Measurement) record).getType() == 0x00) {
-
+        if ((((Measurement) record).getType() == 0x00)
+                && (!record.getClass().equals(HSMMeasurement.class))) {
+            JsonObject row1d = JsonObject.create();
             row1d = JsonObject.empty()
                     .put("x", ((Measurement) record).getPositionX())
                     .put("value", ((Measurement) record).getValue())
                     .put("varId", ((Measurement) record).getVarName());
+
+            logger.debug("row1d Record: {} --- topicsList {}", row1d,
+                    topicsList);
+
+            try {
+                proteusBucket.mutateIn(((Measurement) record).getStringCoilID())
+                        .arrayAppend(topicsList.get(0), row1d).execute();
+                logger.debug("Updating Row1D on Topic: {} for Coil {} ",
+                        topicsList.get(0), ((Measurement) record).getCoilID());
+                logger.debug("--- Coil: {}",
+                        ((Measurement) record).getCoilID());
+                logger.debug("--- Position X: {}",
+                        ((Measurement) record).getPositionX());
+                logger.debug("--- Value: {}",
+                        ((Measurement) record).getValue());
+                logger.debug("--- Variable: {}",
+                        ((Measurement) record).getVarName());
+                logger.debug("--- Row1D: {}", row1d);
+            } catch (Exception e) {
+                logger.debug(
+                        "Exception while updating Row1D on Topic: {} for Coil {} ",
+                        topicsList.get(0), ((Measurement) record).getCoilID());
+                logger.debug("--- Coil: {}",
+                        ((Measurement) record).getCoilID());
+                logger.debug("--- Position X: {}",
+                        ((Measurement) record).getPositionX());
+                logger.debug("--- Value: {}",
+                        ((Measurement) record).getValue());
+                logger.debug("--- Variable: {}",
+                        ((Measurement) record).getVarName());
+                logger.debug("--- Row1D: {}", row1d);
+                logger.debug("Exception updating Row1D:" + e.toString());
+            }
+
         }
 
         if (((Measurement) record).getType() == 0x01) {
-
+            JsonObject row2d = JsonObject.create();
             row2d = JsonObject.empty()
                     .put("x", ((Measurement) record).getPositionX())
                     .put("y", ((Measurement) record).getPositionY())
                     .put("value", ((Measurement) record).getValue())
                     .put("varId", ((Measurement) record).getVarName());
+
+            logger.debug("row2d Record: {} --- topicsList {}", row2d,
+                    topicsList);
+
+            if (!row2d.isEmpty()) {
+
+                try {
+                    proteusBucket
+                            .mutateIn(((Measurement) record).getStringCoilID())
+                            .arrayAppend(topicsList.get(0), row2d).execute();
+                    logger.debug("Updating Row2D on Topic: {} for Coil {} ",
+                            topicsList.get(0),
+                            ((Measurement) record).getCoilID());
+                    logger.debug("--- Coil: {}",
+                            ((Measurement) record).getCoilID());
+                    logger.debug("--- Position X: {}",
+                            ((Measurement) record).getPositionX());
+                    logger.debug("---- Position Y: {}",
+                            ((Measurement) record).getPositionY());
+                    logger.debug("--- Value: {}",
+                            ((Measurement) record).getValue());
+                    logger.debug("--- Variable: {}",
+                            ((Measurement) record).getVarName());
+                    logger.debug("--- Row2D: {}", row2d);
+                } catch (Exception e) {
+                    logger.debug(
+                            "Exception while updating Row2D on Topic: {} for Coil {} ",
+                            topicsList.get(0),
+                            ((Measurement) record).getCoilID());
+                    logger.debug("--- Coil: {}",
+                            ((Measurement) record).getCoilID());
+                    logger.debug("--- Position X: {}",
+                            ((Measurement) record).getPositionX());
+                    logger.debug("---- Position Y: {}",
+                            ((Measurement) record).getPositionY());
+                    logger.debug("--- Value: {}",
+                            ((Measurement) record).getValue());
+                    logger.debug("--- Variable: {}",
+                            ((Measurement) record).getVarName());
+                    logger.debug("--- Row2D: {}", row2d);
+                    logger.debug("Exception updating Row2D:" + e.toString());
+
+                }
+
+            }
+
         }
 
         if (record.getClass().equals(HSMMeasurement.class)) {
+            JsonObject hsm = JsonObject.create();
             hsm = JsonObject.empty().put("variables",
                     ((Measurement) record).getHSMVariables());
-        }
 
-        if (!row1d.isEmpty()) {
-            proteusBucket.mutateIn(((Measurement) record).getStringCoilID())
-                    .arrayAppend(topicsList.get(0), row1d).execute();
-        }
+            logger.debug("HSM Record: {} --- topicsList {}", hsm, topicsList);
 
-        if (!row2d.isEmpty()) {
-            proteusBucket.mutateIn(((Measurement) record).getStringCoilID())
-                    .arrayAppend(topicsList.get(0), row2d).execute();
-        }
+            try {
+                proteusBucket.mutateIn(((Measurement) record).getStringCoilID())
+                        .replace("proteus-hsm",
+                                ((Measurement) record).getHSMVariables())
+                        .execute();
+                logger.debug("Updating HSM for Coil {} ",
+                        ((Measurement) record).getCoilID());
+                logger.debug("--- Coil: {}",
+                        ((Measurement) record).getCoilID());
+                logger.debug("--- HSM: {} ",
+                        ((Measurement) record).getHSMVariables());
 
-        if (!hsm.isEmpty()) {
-            proteusBucket.mutateIn(((Measurement) record).getStringCoilID())
-                    .upsert("proteus-hsm",
-                            ((Measurement) record).getHSMVariables())
-                    .execute();
+            } catch (Exception e) {
+                logger.debug("Exception while updating HSM for Coil {} ",
+                        ((Measurement) record).getCoilID());
+                logger.debug("--- Coil: {}",
+                        ((Measurement) record).getCoilID());
+                logger.debug("--- HSM: {} ",
+                        ((Measurement) record).getHSMVariables());
+                logger.debug("Exception updating HSM: {}" + e.toString());
+            }
         }
 
     }
