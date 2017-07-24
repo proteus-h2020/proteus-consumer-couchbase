@@ -1,7 +1,5 @@
 package eu.proteus.consumer;
 
-import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -19,8 +17,8 @@ import com.couchbase.client.java.env.CouchbaseEnvironment;
 import com.couchbase.client.java.env.DefaultCouchbaseEnvironment;
 
 import eu.proteus.consumer.exceptions.InvalidTaskTypeException;
+import eu.proteus.consumer.utils.ConsumerUtils;
 import eu.proteus.consumer.utils.KafkaTopics;
-import eu.proteus.producer.utils.ConsumerUtils;
 
 public class ProteusCouchbase {
 
@@ -29,7 +27,6 @@ public class ProteusCouchbase {
 	private static final Logger logger = LoggerFactory.getLogger(Runner.class);
 	private List<Runner> runners = new LinkedList<Runner>();
 	private static ExecutorService service = Executors.newFixedThreadPool(3);
-	private InputStream inputStream;
 
 	// Couchbase Connection
 	private static Cluster clusterCouchbase;
@@ -37,21 +34,17 @@ public class ProteusCouchbase {
 	private static CouchbaseEnvironment couchbaseEnvironment;
 	private static List<String> nodes;
 
-	// Kafka Connection
-	private ArrayList<String> topicsList;
-
 	private void run(String[] args) throws InterruptedException, InvalidTaskTypeException {
 
 		nodes = Arrays.asList("192.168.4.246", "192.168.4.247", "192.168.4.248");
 		couchbaseEnvironment = DefaultCouchbaseEnvironment.builder().build();
 		clusterCouchbase = CouchbaseCluster.create(couchbaseEnvironment, nodes);
-		proteusBucket = clusterCouchbase.openBucket("proteus");
 
 		for (KafkaTopics topic : KafkaTopics.values()) {
+			proteusBucket = ConsumerUtils.selectCouchbaseBucket(clusterCouchbase, topic.name());
 			Properties runnerProperties = new Properties();
 			runnerProperties = ConsumerUtils.loadPropertiesFromFile(PROPERTIES_FILE);
 			runnerProperties.put("eu.proteus.kafkaTopic", topic.name());
-
 			runners.add(new Runner(runnerProperties, proteusBucket));
 		}
 
@@ -59,7 +52,6 @@ public class ProteusCouchbase {
 			for (Runner runner : runners) {
 				Thread t = new Thread(runner);
 				t.start();
-				// service.execute(runner);
 			}
 		}
 
