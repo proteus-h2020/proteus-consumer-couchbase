@@ -3,26 +3,26 @@ package eu.proteus.couchbase.utils;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.couchbase.client.core.message.kv.subdoc.multi.Lookup;
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.document.JsonDocument;
 import com.couchbase.client.java.document.json.JsonObject;
 import com.couchbase.client.java.subdoc.DocumentFragment;
 
+import eu.proteus.consumer.model.Measurement;
 import eu.proteus.consumer.model.MomentsResult;
 
 public class CouchbaseSimpleMomentsUtils {
 
-    private static String DOCUMENT_HEADER = "simple-moments";
-    private static String DOCUMENT_SEPARATOR = "-";
+    private static final Logger logger = LoggerFactory.getLogger("updates");
 
     public static boolean checkIfDocumentExists(int coilID,
             Bucket proteusBucket) {
 
-        StringBuilder documentName = new StringBuilder().append(DOCUMENT_HEADER)
-                .append(DOCUMENT_SEPARATOR).append(String.valueOf(coilID));
-
-        JsonDocument checkExists = proteusBucket.get(documentName.toString());
+        JsonDocument checkExists = proteusBucket.get(String.valueOf(coilID));
         if (checkExists == null) {
             return false;
         }
@@ -36,53 +36,74 @@ public class CouchbaseSimpleMomentsUtils {
     public static void createSimpleMomentsFirstTime(int coilID, Object record,
             ArrayList<String> topicLIst, Bucket proteusBucket) {
 
-        List<JsonObject> proteusSimpleMoments = new ArrayList<>();
-        JsonObject simpleMoments = JsonObject.create();
-        simpleMoments = JsonObject.empty()
-                .put("var-id", ((MomentsResult) record).getVarId())
-                .put("mean", ((MomentsResult) record).getMean())
-                .put("variance", ((MomentsResult) record).getVariance())
-                .put("counter", ((MomentsResult) record).getCounter())
-                .put("stdDeviation", ((MomentsResult) record).getStdDeviation())
-                .put("x", ((MomentsResult) record).getX())
-                .put("y", ((MomentsResult) record).getY());
+        try {
+            logger.debug("New Document. Enter Point -> Simple Moments");
+            List<JsonObject> proteusSimpleMoments = new ArrayList<>();
+            JsonObject simpleMoments = JsonObject.create();
+            simpleMoments = JsonObject.empty()
+                    .put("varID", ((MomentsResult) record).getVarId())
+                    .put("mean", ((MomentsResult) record).getMean())
+                    .put("variance", ((MomentsResult) record).getVariance())
+                    .put("counter", ((MomentsResult) record).getCounter())
+                    .put("stdDeviation",
+                            Math.sqrt(((MomentsResult) record).getVariance()))
+                    .put("x", ((MomentsResult) record).getX())
+                    .put("y", ((MomentsResult) record).getY());
 
-        proteusSimpleMoments.add(simpleMoments);
+            proteusSimpleMoments.add(simpleMoments);
 
-        JsonObject structureProteusDocument = JsonObject.empty()
-                .put("coilID",
-                        Integer.toString(((MomentsResult) record).getCoilId()))
-                .put("values", proteusSimpleMoments);
+            JsonObject structureProteusDocument = JsonObject.empty()
+                    .put("coilID",
+                            Integer.toString(
+                                    ((MomentsResult) record).getCoilId()))
+                    .put("proteus-realtime", new ArrayList())
+                    .put("proteus-flatness", new ArrayList())
+                    .put("proteus-hsm",
+                            ((Measurement) record).getHSMVariables())
+                    .put("calculations", proteusSimpleMoments);
 
-        StringBuilder documentName = new StringBuilder().append(DOCUMENT_HEADER)
-                .append(DOCUMENT_SEPARATOR).append(String.valueOf(coilID));
+            StringBuilder documentName = new StringBuilder()
+                    .append(String.valueOf(coilID));
 
-        JsonDocument doc = JsonDocument.create(documentName.toString(),
-                structureProteusDocument);
-        proteusBucket.upsert(doc);
+            JsonDocument doc = JsonDocument.create(documentName.toString(),
+                    structureProteusDocument);
+            proteusBucket.upsert(doc);
+        } catch (Exception e) {
+            logger.debug("Exception creating Document -> Simple Moments");
+        }
 
     }
 
     public static void updateSimpleMomentsDocument(Bucket proteusBucket,
             ArrayList<String> topicsList, Object record) {
 
-        StringBuilder documentName = new StringBuilder().append(DOCUMENT_HEADER)
-                .append(DOCUMENT_SEPARATOR)
-                .append(((MomentsResult) record).getCoilId());
+        try {
+            logger.debug("Updating Document. Entry point -> Simple Moments");
+            JsonObject simpleMoments = JsonObject.create();
 
-        JsonObject simpleMoments = JsonObject.create();
+            simpleMoments = JsonObject.empty()
+                    .put("varID", ((MomentsResult) record).getVarId())
+                    .put("mean", ((MomentsResult) record).getMean())
+                    .put("variance", ((MomentsResult) record).getVariance())
+                    .put("counter", ((MomentsResult) record).getCounter())
+                    .put("stdDeviation",
+                            Math.sqrt(((MomentsResult) record).getVariance()))
+                    .put("x", ((MomentsResult) record).getX())
+                    .put("y", ((MomentsResult) record).getY());
 
-        simpleMoments = JsonObject.empty()
-                .put("varId", ((MomentsResult) record).getVarId())
-                .put("mean", ((MomentsResult) record).getMean())
-                .put("variance", ((MomentsResult) record).getVariance())
-                .put("counter", ((MomentsResult) record).getCounter())
-                .put("stdDeviation", ((MomentsResult) record).getStdDeviation())
-                .put("x", ((MomentsResult) record).getX())
-                .put("y", ((MomentsResult) record).getY());
+            logger.debug("Value {}", simpleMoments);
 
-        proteusBucket.mutateIn(documentName.toString())
-                .arrayAppend("values", simpleMoments).execute();
+            proteusBucket
+                    .mutateIn(String
+                            .valueOf(((MomentsResult) record).getCoilId()))
+                    .arrayAppend("calculations", simpleMoments).execute();
+
+        }
+
+        catch (Exception e) {
+            logger.debug(
+                    "Exception updating Document. Entry point -> Simple Moments");
+        }
     }
 
     public static String getKafkaTopic(ArrayList<String> topicList) {

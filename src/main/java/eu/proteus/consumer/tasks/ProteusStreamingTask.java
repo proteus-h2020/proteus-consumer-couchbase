@@ -26,9 +26,11 @@ public class ProteusStreamingTask implements ProteusTask {
 
         if (CouchbaseSimulationTopicsUtils.checkIfDocumentExists(coil,
                 proteusBucket)) {
+            System.out.println("Streaming");
             CouchbaseSimulationTopicsUtils.updateDocument(proteusBucket,
                     topicList, record);
         } else {
+            System.out.println("Streaming");
             CouchbaseSimulationTopicsUtils.createDocumentFirstTime(
                     ((Measurement) record).getCoilID(), record, topicList,
                     proteusBucket);

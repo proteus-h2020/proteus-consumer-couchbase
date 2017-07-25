@@ -73,7 +73,8 @@ public class CouchbaseSimulationTopicsUtils {
         JsonObject structureProteusDocument = JsonObject.empty()
                 .put("coilID", coilID).put("proteus-realtime", proteusRealtime)
                 .put("proteus-flatness", proteusFlatness)
-                .put("proteus-hsm", ((Measurement) record).getHSMVariables());
+                .put("proteus-hsm", ((Measurement) record).getHSMVariables())
+                .put("calculations", new ArrayList());
         JsonDocument doc = JsonDocument.create(String.valueOf(coilID),
                 structureProteusDocument);
         proteusBucket.upsert(doc);

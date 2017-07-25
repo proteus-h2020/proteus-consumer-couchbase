@@ -22,45 +22,48 @@ import eu.proteus.consumer.utils.KafkaTopics;
 
 public class ProteusCouchbase {
 
-	private static final String PROPERTIES_FILE = "src/main/resources/config.properties";
+    private static final String PROPERTIES_FILE = "src/main/resources/config.properties";
 
-	private static final Logger logger = LoggerFactory.getLogger(Runner.class);
-	private List<Runner> runners = new LinkedList<Runner>();
-	private static ExecutorService service = Executors.newFixedThreadPool(3);
+    private static final Logger logger = LoggerFactory.getLogger(Runner.class);
+    private List<Runner> runners = new LinkedList<Runner>();
+    private static ExecutorService service = Executors.newFixedThreadPool(3);
 
-	// Couchbase Connection
-	private static Cluster clusterCouchbase;
-	private static Bucket proteusBucket;
-	private static CouchbaseEnvironment couchbaseEnvironment;
-	private static List<String> nodes;
+    // Couchbase Connection
+    private static Cluster clusterCouchbase;
+    private static Bucket proteusBucket;
+    private static CouchbaseEnvironment couchbaseEnvironment;
+    private static List<String> nodes;
 
-	private void run(String[] args) throws InterruptedException, InvalidTaskTypeException {
+    private void run(String[] args)
+            throws InterruptedException, InvalidTaskTypeException {
 
-		nodes = Arrays.asList("192.168.4.246", "192.168.4.247", "192.168.4.248");
-		couchbaseEnvironment = DefaultCouchbaseEnvironment.builder().build();
-		clusterCouchbase = CouchbaseCluster.create(couchbaseEnvironment, nodes);
+        nodes = Arrays.asList("192.168.4.246", "192.168.4.247",
+                "192.168.4.248");
+        couchbaseEnvironment = DefaultCouchbaseEnvironment.builder().build();
+        clusterCouchbase = CouchbaseCluster.create(couchbaseEnvironment, nodes);
 
-		for (KafkaTopics topic : KafkaTopics.values()) {
-			proteusBucket = ConsumerUtils.selectCouchbaseBucket(clusterCouchbase, topic.name());
-			Properties runnerProperties = new Properties();
-			runnerProperties = ConsumerUtils.loadPropertiesFromFile(PROPERTIES_FILE);
-			runnerProperties.put("eu.proteus.kafkaTopic", topic.name());
-			runners.add(new Runner(runnerProperties, proteusBucket));
-		}
+        for (KafkaTopics topic : KafkaTopics.values()) {
+            proteusBucket = clusterCouchbase.openBucket("proteus");
+            Properties runnerProperties = new Properties();
+            runnerProperties = ConsumerUtils
+                    .loadPropertiesFromFile(PROPERTIES_FILE);
+            runnerProperties.put("eu.proteus.kafkaTopic", topic.name());
+            runners.add(new Runner(runnerProperties, proteusBucket));
+        }
 
-		if (!service.isShutdown()) {
-			for (Runner runner : runners) {
-				Thread t = new Thread(runner);
-				t.start();
-			}
-		}
+        if (!service.isShutdown()) {
+            for (Runner runner : runners) {
+                Thread t = new Thread(runner);
+                t.start();
+            }
+        }
 
-		service.shutdownNow();
+        service.shutdownNow();
 
-	}
+    }
 
-	public static void main(String[] args) throws Exception {
-		new ProteusCouchbase().run(args);
-	}
+    public static void main(String[] args) throws Exception {
+        new ProteusCouchbase().run(args);
+    }
 
 }
