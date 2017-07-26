@@ -10,6 +10,7 @@ import com.couchbase.client.java.Bucket;
 
 import eu.proteus.consumer.model.Measurement;
 import eu.proteus.consumer.utils.ConsumerUtils;
+import eu.proteus.couchbase.utils.CouchbaseCommons;
 import eu.proteus.couchbase.utils.CouchbaseSimulationTopicsUtils;
 
 public class ProteusHSMTask implements ProteusTask {
@@ -27,8 +28,7 @@ public class ProteusHSMTask implements ProteusTask {
         logger.info("< " + this.getClass().getName() + " > - Flatness for coil "
                 + ((Measurement) record).getCoilID() + " inserted");
 
-        if (CouchbaseSimulationTopicsUtils.checkIfDocumentExists(coil,
-                proteusBucket)) {
+        if (CouchbaseCommons.checkIfDocumentExists(coil, proteusBucket)) {
             CouchbaseSimulationTopicsUtils.updateDocument(proteusBucket,
                     topicList, record);
         } else {

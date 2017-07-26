@@ -43,7 +43,11 @@ public class ProteusCouchbase {
         clusterCouchbase = CouchbaseCluster.create(couchbaseEnvironment, nodes);
 
         for (KafkaTopics topic : KafkaTopics.values()) {
-            proteusBucket = clusterCouchbase.openBucket("proteus");
+            /*
+             * Cambiar el valor harcodeado, tomar el nombre de la enumeracion
+             * ProteusBuckets
+             */
+            proteusBucket = clusterCouchbase.openBucket("testing");
             Properties runnerProperties = new Properties();
             runnerProperties = ConsumerUtils
                     .loadPropertiesFromFile(PROPERTIES_FILE);

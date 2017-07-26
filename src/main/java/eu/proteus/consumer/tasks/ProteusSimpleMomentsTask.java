@@ -10,6 +10,7 @@ import com.couchbase.client.java.Bucket;
 
 import eu.proteus.consumer.model.MomentsResult;
 import eu.proteus.consumer.utils.ConsumerUtils;
+import eu.proteus.couchbase.utils.CouchbaseCommons;
 import eu.proteus.couchbase.utils.CouchbaseSimpleMomentsUtils;
 
 public class ProteusSimpleMomentsTask implements ProteusTask {
@@ -29,7 +30,7 @@ public class ProteusSimpleMomentsTask implements ProteusTask {
                 + String.valueOf(((MomentsResult) record).getY()) + "//"
                 + String.valueOf(((MomentsResult) record).getVarId()));
 
-        if (CouchbaseSimpleMomentsUtils.checkIfDocumentExists(
+        if (CouchbaseCommons.checkIfDocumentExists(
                 ((MomentsResult) record).getCoilId(), proteusBucket)) {
             CouchbaseSimpleMomentsUtils.updateSimpleMomentsDocument(
                     proteusBucket, topicList, record);

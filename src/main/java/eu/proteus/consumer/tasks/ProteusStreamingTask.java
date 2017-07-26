@@ -10,6 +10,7 @@ import com.couchbase.client.java.Bucket;
 
 import eu.proteus.consumer.model.Measurement;
 import eu.proteus.consumer.utils.ConsumerUtils;
+import eu.proteus.couchbase.utils.CouchbaseCommons;
 import eu.proteus.couchbase.utils.CouchbaseSimulationTopicsUtils;
 
 public class ProteusStreamingTask implements ProteusTask {
@@ -24,13 +25,10 @@ public class ProteusStreamingTask implements ProteusTask {
     public void doWork(int coil, Object record, Bucket proteusBucket,
             ArrayList<String> topicList) {
 
-        if (CouchbaseSimulationTopicsUtils.checkIfDocumentExists(coil,
-                proteusBucket)) {
-            System.out.println("Streaming");
+        if (CouchbaseCommons.checkIfDocumentExists(coil, proteusBucket)) {
             CouchbaseSimulationTopicsUtils.updateDocument(proteusBucket,
                     topicList, record);
         } else {
-            System.out.println("Streaming");
             CouchbaseSimulationTopicsUtils.createDocumentFirstTime(
                     ((Measurement) record).getCoilID(), record, topicList,
                     proteusBucket);

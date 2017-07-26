@@ -10,6 +10,7 @@ import com.couchbase.client.java.Bucket;
 
 import eu.proteus.consumer.model.Measurement;
 import eu.proteus.consumer.utils.ConsumerUtils;
+import eu.proteus.couchbase.utils.CouchbaseCommons;
 import eu.proteus.couchbase.utils.CouchbaseSimulationTopicsUtils;
 
 public class ProteusFlatnessTask implements ProteusTask {
@@ -24,8 +25,7 @@ public class ProteusFlatnessTask implements ProteusTask {
     public void doWork(int coil, Object record, Bucket proteusBucket,
             ArrayList<String> topicList) {
 
-        if (CouchbaseSimulationTopicsUtils.checkIfDocumentExists(coil,
-                proteusBucket)) {
+        if (CouchbaseCommons.checkIfDocumentExists(coil, proteusBucket)) {
             CouchbaseSimulationTopicsUtils.updateDocument(proteusBucket,
                     topicList, record);
         } else {
