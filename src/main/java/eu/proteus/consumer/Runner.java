@@ -48,6 +48,12 @@ public class Runner implements Runnable {
     public void setup(Properties properties) {
 
         try {
+            /*
+             * The Runner creates its own Task. This Task it´s selected by the
+             * Kafka Topic name and starts putting the data into the Bucket.
+             *
+             */
+
             task = ProteusTaskType
                     .from((String) properties.get("eu.proteus.kafkaTopic"));
             task.setup(properties);

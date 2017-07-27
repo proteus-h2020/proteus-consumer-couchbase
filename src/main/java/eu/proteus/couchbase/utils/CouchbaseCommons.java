@@ -20,6 +20,12 @@ public class CouchbaseCommons {
     private static final Logger exceptionsLogger = LoggerFactory
             .getLogger("exceptions");
 
+    /*
+     * This method checks if the document exists. Returns true, if exists, or
+     * false.
+     *
+     */
+
     public static boolean checkIfDocumentExists(int coil,
             Bucket proteusBucket) {
         JsonDocument checkExists = proteusBucket.get(String.valueOf(coil));
@@ -29,9 +35,21 @@ public class CouchbaseCommons {
             return true;
     }
 
+    /*
+     * Get the topic name where the data is originated. This name it´s used to
+     * put the data in the properly bucket.
+     *
+     */
+
     public static String getKafkaTopic(ArrayList<String> topicList) {
         return topicList.get(0);
     }
+
+    /*
+     * This function checks if the property ( proteus-realtime,
+     * proteus-flatness, proteus-hsm or simple-moments) exists in the document.
+     * 
+     */
 
     public static boolean checkIfPropertyExists(Bucket proteusBucket,
             int coilId, String path) {
@@ -41,6 +59,12 @@ public class CouchbaseCommons {
         boolean pathExist = resultado.content(path, Boolean.class);
         return pathExist;
     }
+
+    /*
+     * This method creates JsonObjets, either 1D row, 2D row or HSM row, to
+     * insert into the simulation topics.
+     * 
+     */
 
     public static JsonObject createObjectforInsertIntoSimulationTopics(
             Object record) {
@@ -66,6 +90,11 @@ public class CouchbaseCommons {
 
     }
 
+    /*
+     * This method creates JsonObjets to insert into the simple moments topics.
+     *
+     */
+
     public static JsonObject createObjectforInsertIntoCalculationsTopics(
             Object record) {
         JsonObject simpleMoments = JsonObject.create();
@@ -83,6 +112,11 @@ public class CouchbaseCommons {
         return simpleMoments;
     }
 
+    /*
+     * Updates streaming topics values.
+     *
+     */
+
     public static void updateValue(Bucket proteusBucket, Object record,
             ArrayList<String> topicsList, JsonObject row) {
         proteusBucket.mutateIn(((Measurement) record).getStringCoilID())
@@ -93,6 +127,11 @@ public class CouchbaseCommons {
                 row, topicsList.get(0));
 
     }
+
+    /*
+     * Updates simple moments values.
+     *
+     */
 
     public static void updateSimpleMomentsValue(Bucket proteusBucket,
             Object record, ArrayList<String> topicsList, JsonObject row) {
@@ -106,6 +145,11 @@ public class CouchbaseCommons {
 
     }
 
+    /*
+     * Create a new simulation property and inserts the first value into it.
+     *
+     */
+
     public static void createPropertyAndInsertValue(Bucket proteusBucket,
             Object record, ArrayList<String> topicsList, JsonObject row) {
         proteusBucket.mutateIn(((Measurement) record).getStringCoilID())
@@ -117,6 +161,11 @@ public class CouchbaseCommons {
                 row, topicsList.get(0));
 
     }
+
+    /*
+     * Create a new simple moments property and inserts the first value into it
+     *
+     */
 
     public static void createPropertyAndInsertValueforSimpleMoments(
             Bucket proteusBucket, Object record, ArrayList<String> topicsList,
