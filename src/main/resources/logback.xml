@@ -23,7 +23,48 @@
 		</rollingPolicy>
 
 	</appender>
+	
+	<appender name="UPDATES-AUDIT"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${DEV_HOME}/updates.log</file>
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<Pattern>
+				%d{yyyy-MM-dd HH:mm:ss} - %msg%n
+			</Pattern>
+		</encoder>
 
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<!-- rollover daily -->
+			<fileNamePattern>${DEV_HOME}/archived/proteus.%d{yyyy-MM-dd}.%i.log
+			</fileNamePattern>
+			<timeBasedFileNamingAndTriggeringPolicy
+				class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+				<maxFileSize>10MB</maxFileSize>
+			</timeBasedFileNamingAndTriggeringPolicy>
+		</rollingPolicy>
+	</appender>
+	
+
+	<appender name="EXCEPTIONS-AUDIT"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${DEV_HOME}/exceptions-updating.log</file>
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<Pattern>
+				%d{yyyy-MM-dd HH:mm:ss} - %msg%n
+			</Pattern>
+		</encoder>
+
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<!-- rollover daily -->
+			<fileNamePattern>${DEV_HOME}/archived/proteus.%d{yyyy-MM-dd}.%i.log
+			</fileNamePattern>
+			<timeBasedFileNamingAndTriggeringPolicy
+				class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+				<maxFileSize>10MB</maxFileSize>
+			</timeBasedFileNamingAndTriggeringPolicy>
+		</rollingPolicy>
+	</appender>
+	
 
 	<appender name="FILE-AUDIT-KAFKA"
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -64,11 +105,20 @@
 		<appender-ref ref="FILE-AUDIT-KAFKA" />
 		<appender-ref ref="STDOUT" />
 	</logger>
+	
+	<logger name="updates" level="debug" additivity="false">
+		<appender-ref ref="UPDATES-AUDIT" />
+		<appender-ref ref="STDOUT" />
+	</logger>
+	
+	<logger name="exceptions" level="debug" additivity="false">
+		<appender-ref ref="EXCEPTIONS-AUDIT" />
+		<appender-ref ref="STDOUT" />
+	</logger>
 
 	<root level="error">
 		<appender-ref ref="FILE-AUDIT" />
 		<appender-ref ref="FILE-AUDIT-KAFKA" />
-
 	</root>
 
 </configuration>

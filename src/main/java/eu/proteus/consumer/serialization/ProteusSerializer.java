@@ -14,29 +14,43 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import eu.proteus.consumer.model.HSMMeasurement;
-import eu.proteus.consumer.model.Measurement;
+import eu.proteus.consumer.model.MomentsResult;
+import eu.proteus.consumer.model.MomentsResult1D;
+import eu.proteus.consumer.model.MomentsResult2D;
 import eu.proteus.consumer.model.ProteusData;
 import eu.proteus.consumer.model.SensorMeasurement;
 import eu.proteus.consumer.model.SensorMeasurement1D;
 import eu.proteus.consumer.model.SensorMeasurement2D;
 
-public class ProteusSerializer implements Closeable, AutoCloseable, Serializer<Measurement>, Deserializer<Measurement> {
+public class ProteusSerializer
+		implements Closeable, AutoCloseable, Serializer<SensorMeasurement>, Deserializer<Object> {
 
 	/**
 	 * Thread-safe kryo instance that handles, serializes and deserializes
 	 * PROTEUS POJOS.
 	 */
+
+	// private static final Logger LOGGER =
+	// LoggerFactory.getLogger(ProteusSerializer.class);
+
 	private ThreadLocal<Kryo> kryos = new ThreadLocal<Kryo>() {
 		@Override
 		protected Kryo initialValue() {
 			Kryo kryo = new Kryo();
 			SensorMeasurementInternalSerializer sensorInternal = new SensorMeasurementInternalSerializer();
+			MomentsInternalSerializer momentsInternal = new MomentsInternalSerializer();
 			HSMMeasurementInternalSerializer hsmInternal = new HSMMeasurementInternalSerializer();
 
 			kryo.addDefaultSerializer(HSMMeasurement.class, hsmInternal);
+
 			kryo.addDefaultSerializer(SensorMeasurement.class, sensorInternal);
 			kryo.addDefaultSerializer(SensorMeasurement1D.class, sensorInternal);
 			kryo.addDefaultSerializer(SensorMeasurement2D.class, sensorInternal);
+
+			kryo.addDefaultSerializer(MomentsResult.class, momentsInternal);
+			kryo.addDefaultSerializer(MomentsResult1D.class, momentsInternal);
+			kryo.addDefaultSerializer(MomentsResult2D.class, momentsInternal);
+
 			return kryo;
 		};
 	};
@@ -51,38 +65,25 @@ public class ProteusSerializer implements Closeable, AutoCloseable, Serializer<M
 	}
 
 	@Override
-	public byte[] serialize(String topic, Measurement record) {
+	public byte[] serialize(String topic, SensorMeasurement record) {
 		int byteBufferLength = 50;
-		if (record instanceof HSMMeasurement) {
-			byteBufferLength = 7600 * 2 * 100; // TODO: improve
-		}
 		ByteBufferOutput output = new ByteBufferOutput(byteBufferLength);
 		kryos.get().writeObject(output, record);
 		return output.toBytes();
 	}
 
 	@Override
-	public Measurement deserialize(String topic, byte[] bytes) {
-		// System.out.println("topic" + topic);
-		// System.out.println("bytes" + bytes);
-		// System.out.println("bytes" + bytes.length);
-		// System.out.println("bytse: " + Arrays.toString(bytes));
-		// System.out.println("kryos: " + kryos.get());
-
-		// if ((topic.equals("proteus-realtime") ||
-		// (topic.equals("proteus-flatness")) && bytes.length > 40)) {
-		// System.out.println("Escape");
-		// return null;
-		// }
-
+	public Object deserialize(String topic, byte[] bytes) {
 		if (topic.equals(ProteusData.get("kafka.topicName")) && bytes.length < 40) {
 			return kryos.get().readObject(new ByteBufferInput(bytes), SensorMeasurement.class);
 		} else if (topic.equals(ProteusData.get("kafka.flatnessTopicName")) && bytes.length < 40) {
 			return kryos.get().readObject(new ByteBufferInput(bytes), SensorMeasurement.class);
 		} else if (topic.equals(ProteusData.get("kafka.hsmTopicName"))) {
 			return kryos.get().readObject(new ByteBufferInput(bytes), HSMMeasurement.class);
+		} else if (topic.equals("simple-moments")) {
+			return kryos.get().readObject(new ByteBufferInput(bytes), MomentsResult.class);
 		} else {
-			throw new IllegalArgumentException("Illegal argument: " + topic);
+			throw new IllegalArgumentException("Invalid topic name: " + topic);
 		}
 	}
 
@@ -100,7 +101,7 @@ public class ProteusSerializer implements Closeable, AutoCloseable, Serializer<M
 				output.writeInt(MAGIC_NUMBER);
 				output.writeByte(row.getType());
 				output.writeInt(cast.getCoilID());
-				output.writeDouble(cast.getPositionX());
+				output.writeDouble(cast.getX());
 				output.writeInt(cast.getVarName());
 				output.writeDouble(cast.getValue());
 			} else {
@@ -108,8 +109,8 @@ public class ProteusSerializer implements Closeable, AutoCloseable, Serializer<M
 				output.writeInt(MAGIC_NUMBER);
 				output.writeByte(row.getType());
 				output.writeInt(cast.getCoilID());
-				output.writeDouble(cast.getPositionX());
-				output.writeDouble(cast.getPositionY());
+				output.writeDouble(cast.getX());
+				output.writeDouble(cast.getY());
 				output.writeInt(cast.getVarName());
 				output.writeDouble(cast.getValue());
 			}
@@ -120,7 +121,7 @@ public class ProteusSerializer implements Closeable, AutoCloseable, Serializer<M
 			int magicNumber = input.readInt();
 			assert (magicNumber == MAGIC_NUMBER);
 
-			boolean is2D = (input.readByte() == 0x01) ? true : false;
+			boolean is2D = (input.readByte() == 0x0001) ? true : false;
 			int coilId = input.readInt();
 			double x = input.readDouble();
 			double y = (is2D) ? input.readDouble() : 0;
@@ -133,6 +134,37 @@ public class ProteusSerializer implements Closeable, AutoCloseable, Serializer<M
 				return new SensorMeasurement1D(coilId, x, varId, value);
 			}
 
+		}
+	}
+
+	private static class MomentsInternalSerializer extends com.esotericsoftware.kryo.Serializer<MomentsResult> {
+		@Override
+		public void write(Kryo kryo, Output output, MomentsResult row) {
+		}
+
+		@Override
+		public MomentsResult read(Kryo kryo, Input input, Class<MomentsResult> clazz) {
+			int magicNumber = input.readInt();
+			assert (magicNumber == MAGIC_NUMBER);
+
+			int coil = input.readInt();
+			int var = input.readInt();
+			byte type = input.readByte();
+
+			if (type == 0x0) {
+				double x = input.readDouble();
+				double mean = input.readDouble();
+				double variance = input.readDouble();
+				double counter = input.readDouble();
+				return new MomentsResult1D(coil, var, mean, variance, counter, x);
+			} else {
+				double x = input.readDouble();
+				double y = input.readDouble();
+				double mean = input.readDouble();
+				double variance = input.readDouble();
+				double counter = input.readDouble();
+				return new MomentsResult2D(coil, var, mean, variance, counter, x, y);
+			}
 		}
 	}
 

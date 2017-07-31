@@ -62,4 +62,12 @@ public class SensorMeasurement2D extends SensorMeasurement {
 		return true;
 	}
 
+	public double getY() {
+		return this.y;
+	}
+
+	public double getX() {
+		return this.x;
+	}
+
 }
