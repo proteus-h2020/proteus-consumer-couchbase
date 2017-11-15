@@ -58,7 +58,7 @@ public class ProteusCouchbase {
                 proteusBucket = clusterCouchbase
                         .openBucket(bucket.toString().toLowerCase());
             }
-            proteusBucket = clusterCouchbase.openBucket("testing");
+            proteusBucket = clusterCouchbase.openBucket("proteus");
             Properties runnerProperties = new Properties();
             runnerProperties = ConsumerUtils
                     .loadPropertiesFromFile(PROPERTIES_FILE);
